@@ -1,30 +1,40 @@
 #include "TileMap.h"
+#include <fstream>
+#include <string>
 
 TileMap::TileMap() {
-    int layout[MAP_ROWS][MAP_COLUMNS] = {
-        { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 },
-        { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 },
-        { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1 },
-        { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 },
-        { 0,0,0,0,0,0,0,0,0,1,1,0,0,1,1,0,1 },
-        { 0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0 },
-        { 0,0,0,1,1,1,1,1,0,0,0,0,0,0,0,0,0 },
-        { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 },
-        { 1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 },
-        { 0,0,0,1,1,1,0,0,0,0,0,0,0,0,0,0,0 },
-        { 0,0,0,0,0,0,0,0,0,1,1,1,0,0,0,0,0 },
-        { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0 },
-        { 1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1 },
-    };
-    memcpy(map, layout, sizeof(map));
+    for (int r = 0; r < MAP_ROWS; r++)
+        for (int c = 0; c < MAP_COLUMNS; c++)
+            map[r][c] = 0;
 }
 
-void TileMap::render(SDL_Renderer* renderer) {
+void TileMap::loadFromFile(const char* filename) {
+    std::ifstream file(filename);
+    if (!file.is_open()) {
+        SDL_Log("Failed to open map file: %s", filename);
+        return;
+    }
+
+    std::string line;
+    int row = 0;
+    while (std::getline(file, line) && row < MAP_ROWS) {
+        for (int column = 0; column < (int)line.size() && column < MAP_COLUMNS; column++) {
+			map[row][column] = line[column] - '0'; // convert char to int
+        }
+        row++;
+    }
+}   
+
+void TileMap::render(SDL_Renderer* renderer, float camX, float camY) {
     SDL_SetRenderDrawColor(renderer, 0, 255, 0, 255);
     for (int r = 0; r < MAP_ROWS; r++) {
         for (int c = 0; c < MAP_COLUMNS; c++) {
             if (map[r][c] == 1) {
-                SDL_Rect rect = { c * TILE_SIZE, r * TILE_SIZE, TILE_SIZE, TILE_SIZE };
+                SDL_Rect rect = {
+                    c * TILE_SIZE - (int)camX,
+                    r * TILE_SIZE - (int)camY,
+                    TILE_SIZE, TILE_SIZE
+                };
                 SDL_RenderFillRect(renderer, &rect);
             }
         }

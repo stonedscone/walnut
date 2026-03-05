@@ -1,14 +1,14 @@
 #include "Player.h"
 
-const float GRAVITY = 1500.0f;
-const float MOVE_SPEED = 300.0f;
-const float JUMP_FORCE = -600.0f;
+const float GRAVITY = 800.0f;
+const float MOVE_SPEED = 180.0f;
+const float JUMP_FORCE = -380.0f;
 //const float GROUND_Y = 500.0F; -- was fake ground
 
 Player::Player() {
-    x = 100; y = 300;
+    x = 100; y = 200;
     velX = 0; velY = 0;
-    width = 32; height = 48;
+    width = 20; height = 30;
 }
 
 void Player::handleInput(const Uint8* keys, float dt) {
@@ -66,8 +66,8 @@ void Player::update(float dt, TileMap& tileMap) {
     */
 }
 
-void Player::render(SDL_Renderer* renderer) {
+void Player::render(SDL_Renderer* renderer, float camX, float camY) {
     SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255); // red rectangle
-    SDL_Rect rect = { (int)x, (int)y, width, height };
+    SDL_Rect rect = { (int)x - (int)camX, (int)y - (int)camY, width, height };
     SDL_RenderFillRect(renderer, &rect);
 }

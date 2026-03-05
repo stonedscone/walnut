@@ -1,2 +1,6 @@
-﻿  TileMap.cpp
+﻿  Player.cpp
+  TileMap.cpp
+  main.cpp
+  Generating Code...
+  LINK : C:\Users\smfel\Desktop\walnut\walnut\x64\Debug\walnut.exe not found or not built by the last incremental link; performing full link
   walnut.vcxproj -> C:\Users\smfel\Desktop\walnut\walnut\x64\Debug\walnut.exe
