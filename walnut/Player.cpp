@@ -6,19 +6,22 @@ const float JUMP_FORCE = -380.0f;
 const float DASH_SPEED = 500.0f;
 const float DASH_TIME = 0.25f;
 const float DASH_CD = 0.8f;
+const float IFRAMES = 1.5f;  // seconds of invincibility after hit
 //const float GROUND_Y = 500.0F; -- was fake ground
 
 Player::Player() {
-    x = 100; y = 200;
+    x = 50; y = 16;
     velX = 0; velY = 0;
-    normalHeight = 30;
-    dashHeight = 15;
-    width = 20;
-    height = normalHeight; // always normal height
+    normalHeight = 48;
+    dashHeight = 24;
+    width = 24;
+    height = normalHeight;
     isDashing = false;
     dashTimer = 0.0f;
     dashCooldown = 0.0f;
     facingDir = 1;
+    health = 4;
+    iFrames = 0.0f;
 }
 
 int Player::getHitboxY() const {
@@ -27,6 +30,21 @@ int Player::getHitboxY() const {
 
 int Player::getHitboxHeight() const {
     return height;
+}
+
+void Player::takeDamage(int amount) {
+    if (iFrames > 0.0f) return; // ignore damage while invincible
+    health -= amount;
+    if (health < 0) health = 0;
+    iFrames = IFRAMES;
+}
+
+bool Player::isAlive() const {
+    return health > 0;
+}
+
+bool Player::isInvincible() const {
+    return iFrames > 0.0f;
 }
 
 void Player::handleInput(const Uint8* keys, float dt) {
@@ -46,14 +64,14 @@ void Player::handleInput(const Uint8* keys, float dt) {
         isDashing = true;
         dashTimer = DASH_TIME;
         dashCooldown = DASH_CD;
-        // removed height change
         velX = DASH_SPEED * facingDir;
     }
 }
 
 void Player::update(float dt, TileMap& tileMap) {
-    //tick timers
+    // tick timers
     if (dashCooldown > 0.0f) dashCooldown -= dt;
+    if (iFrames > 0.0f) iFrames -= dt;
     if (isDashing) {
         dashTimer -= dt;
         if (dashTimer <= 0.0f) {
@@ -64,33 +82,47 @@ void Player::update(float dt, TileMap& tileMap) {
 
     velY += GRAVITY * dt;
 
-    //simple collision with the ground
+    // simple collision with the ground
     x += velX * dt;
     int left = (int)x / TILE_SIZE;
     int right = ((int)x + width - 1) / TILE_SIZE;
     int top = getHitboxY() / TILE_SIZE;
     int bottom = (getHitboxY() + getHitboxHeight() - 1) / TILE_SIZE;
 
-for (int r = top; r <= bottom; r++) {
-    if (velX > 0) {
-        if (tileMap.isBreakable(r, right) && isDashing) {
-            tileMap.breakTile(r, right);
-        } else if (tileMap.map[r][right] == 1) {
-            x = (float)(right * TILE_SIZE - width);
-            velX = 0;
+    for (int r = top; r <= bottom; r++) {
+        if (velX > 0) {
+            if (tileMap.isBreakable(r, right)) {
+                if (isDashing) {
+                    tileMap.breakTile(r, right); // break it
+                }
+                else {
+                    x = (float)(right * TILE_SIZE - width); // treat as wall
+                    velX = 0;
+                }
+            }
+            else if (tileMap.map[r][right] == 1) {
+                x = (float)(right * TILE_SIZE - width);
+                velX = 0;
+            }
+        }
+        if (velX < 0) {
+            if (tileMap.isBreakable(r, left)) {
+                if (isDashing) {
+                    tileMap.breakTile(r, left); // break it
+                }
+                else {
+                    x = (float)((left + 1) * TILE_SIZE); // treat as wall
+                    velX = 0;
+                }
+            }
+            else if (tileMap.map[r][left] == 1) {
+                x = (float)((left + 1) * TILE_SIZE);
+                velX = 0;
+            }
         }
     }
-    if (velX < 0) {
-        if (tileMap.isBreakable(r, left) && isDashing) {
-            tileMap.breakTile(r, left);
-        } else if (tileMap.map[r][left] == 1) {
-            x = (float)((left + 1) * TILE_SIZE);
-            velX = 0;
-        }
-    }
-}
 
-    //air collision
+    // air collision
     y += velY * dt;
     left = (int)x / TILE_SIZE;
     right = ((int)x + width - 1) / TILE_SIZE;
@@ -117,7 +149,9 @@ for (int r = top; r <= bottom; r++) {
 }
 
 void Player::render(SDL_Renderer* renderer, float camX, float camY) {
-    // during dash draw only the lower hitbox portion in a lighter color
+    // flash while invincible
+    if (iFrames > 0.0f && (int)(iFrames * 10) % 2 == 0) return;
+
     if (isDashing) {
         SDL_SetRenderDrawColor(renderer, 255, 100, 100, 255); // lighter red while dashing
         SDL_Rect rect = { (int)x - (int)camX, getHitboxY() - (int)camY, width, dashHeight };
@@ -127,5 +161,41 @@ void Player::render(SDL_Renderer* renderer, float camX, float camY) {
         SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255); // red rectangle
         SDL_Rect rect = { (int)x - (int)camX, (int)y - (int)camY, width, height };
         SDL_RenderFillRect(renderer, &rect);
+    }
+}
+
+void Player::renderHUD(SDL_Renderer* renderer) {
+    int squareSize = 16;
+    int padding = 4;
+    int startX = 8;
+    int startY = 8;
+
+    for (int i = 0; i < 2; i++) { // 2 full heart squares
+        int fullHalves = health - (i * 2); // how many halves remain for this square
+
+        SDL_Rect outline = { startX + i * (squareSize + padding), startY, squareSize, squareSize };
+
+        if (fullHalves >= 2) {
+            // full heart — solid red
+            SDL_SetRenderDrawColor(renderer, 220, 50, 50, 255);
+            SDL_RenderFillRect(renderer, &outline);
+        }
+        else if (fullHalves == 1) {
+            // half heart — fill left half only
+            SDL_SetRenderDrawColor(renderer, 80, 80, 80, 255);
+            SDL_RenderFillRect(renderer, &outline);
+            SDL_Rect half = { outline.x, outline.y, squareSize / 2, squareSize };
+            SDL_SetRenderDrawColor(renderer, 220, 50, 50, 255);
+            SDL_RenderFillRect(renderer, &half);
+        }
+        else {
+            // empty heart — dark grey
+            SDL_SetRenderDrawColor(renderer, 80, 80, 80, 255);
+            SDL_RenderFillRect(renderer, &outline);
+        }
+
+        // white outline
+        SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+        SDL_RenderDrawRect(renderer, &outline);
     }
 }

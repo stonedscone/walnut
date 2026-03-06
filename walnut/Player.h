@@ -7,20 +7,27 @@ public:
     float x, y;
     float velX, velY;
     int width, height;
-
-    //dash
+    int normalHeight;
+    int dashHeight;
     bool isDashing;
     float dashTimer;
     float dashCooldown;
-    int normalHeight;
-    int dashHeight;
-    int facingDir; // 1 = right, -1 = left
+    int facingDir;
+
+    // health
+    int health;        // max 4 half hearts
+    float iFrames;     // invincibility timer after hit
 
     Player();
     void handleInput(const Uint8* keys, float dt);
     void update(float dt, TileMap& tileMap);
     void render(SDL_Renderer* renderer, float camX, float camY);
+    void renderHUD(SDL_Renderer* renderer);
 
-    int getHitboxY() const;
+    int getHitboxY()      const;
     int getHitboxHeight() const;
+
+    void takeDamage(int amount);
+    bool isAlive() const;
+    bool isInvincible() const;
 };

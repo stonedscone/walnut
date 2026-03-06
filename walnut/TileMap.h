@@ -1,9 +1,9 @@
 #pragma once
 #include <SDL2/SDL.h>
 
-const int TILE_SIZE = 32;
-const int MAP_ROWS = 12;
-const int MAP_COLUMNS = 80;
+const int TILE_SIZE = 16;
+const int MAP_ROWS = 28;
+const int MAP_COLUMNS = 165;
 
 class TileMap {
 public:

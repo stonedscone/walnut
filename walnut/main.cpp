@@ -5,8 +5,9 @@
 #include "TileMap.h"
 #include "Camera.h"
 #include "GameState.h"
+#include "Enemy.h"
+#include <vector>
 
-// helper to draw centered text
 void drawText(SDL_Renderer* renderer, TTF_Font* font, const char* text, int y, SDL_Color color) {
     SDL_Surface* surface = TTF_RenderText_Solid(font, text, color);
     SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer, surface);
@@ -37,13 +38,30 @@ int main() {
     TTF_Font* fontLarge = TTF_OpenFont("font.ttf", 24);
     TTF_Font* fontSmall = TTF_OpenFont("font.ttf", 12);
 
+    if (!fontLarge || !fontSmall) {
+        SDL_Log("Font failed: %s", TTF_GetError());
+        return 1;
+    }
+
     Player player;
     TileMap tileMap;
     tileMap.loadFromFile("level1.txt");
     Camera camera;
 
+    // spawn enemies across all floors
+    std::vector<Enemy> enemies;
+    enemies.push_back(Enemy(100, 16));
+    enemies.push_back(Enemy(600, 16));
+    enemies.push_back(Enemy(200, 96));
+    enemies.push_back(Enemy(800, 96));
+    enemies.push_back(Enemy(400, 176));
+    enemies.push_back(Enemy(1000, 176));
+    enemies.push_back(Enemy(300, 256));
+    enemies.push_back(Enemy(900, 256));
+    enemies.push_back(Enemy(1500, 256));
+
     GameState state = STATE_TITLE;
-    int titleSelection = 0; // 0 = Play, 1 = Exit
+    int titleSelection = 0;
 
     SDL_Color white = { 255, 255, 255, 255 };
     SDL_Color yellow = { 255, 255, 0,   255 };
@@ -53,7 +71,6 @@ int main() {
     SDL_Event event;
 
     while (running) {
-        // delta time
         Uint32 now = SDL_GetTicks();
         float dt = (now - lastTime) / 1000.0f;
         if (dt > 0.05f) dt = 0.05f;
@@ -64,15 +81,22 @@ int main() {
 
             if (event.type == SDL_KEYDOWN) {
                 if (state == STATE_TITLE) {
-                    if (event.key.keysym.sym == SDLK_UP)
-                        titleSelection = 0;
-                    if (event.key.keysym.sym == SDLK_DOWN)
-                        titleSelection = 1;
+                    if (event.key.keysym.sym == SDLK_UP)   titleSelection = 0;
+                    if (event.key.keysym.sym == SDLK_DOWN) titleSelection = 1;
                     if (event.key.keysym.sym == SDLK_RETURN) {
                         if (titleSelection == 0) {
-                            // reset and play
                             player = Player();
                             tileMap.loadFromFile("level1.txt");
+                            enemies.clear();
+                            enemies.push_back(Enemy(100, 16));
+                            enemies.push_back(Enemy(600, 16));
+                            enemies.push_back(Enemy(200, 96));
+                            enemies.push_back(Enemy(800, 96));
+                            enemies.push_back(Enemy(400, 176));
+                            enemies.push_back(Enemy(1000, 176));
+                            enemies.push_back(Enemy(300, 256));
+                            enemies.push_back(Enemy(900, 256));
+                            enemies.push_back(Enemy(1500, 256));
                             state = STATE_PLAYING;
                         }
                         if (titleSelection == 1) running = false;
@@ -80,19 +104,25 @@ int main() {
                 }
 
                 if (state == STATE_GAMEOVER) {
-                    if (event.key.keysym.sym == SDLK_UP)
-                        titleSelection = 0;
-                    if (event.key.keysym.sym == SDLK_DOWN)
-                        titleSelection = 1;
+                    if (event.key.keysym.sym == SDLK_UP)   titleSelection = 0;
+                    if (event.key.keysym.sym == SDLK_DOWN) titleSelection = 1;
                     if (event.key.keysym.sym == SDLK_RETURN) {
                         if (titleSelection == 0) {
-                            // retry
                             player = Player();
                             tileMap.loadFromFile("level1.txt");
+                            enemies.clear();
+                            enemies.push_back(Enemy(100, 16));
+                            enemies.push_back(Enemy(600, 16));
+                            enemies.push_back(Enemy(200, 96));
+                            enemies.push_back(Enemy(800, 96));
+                            enemies.push_back(Enemy(400, 176));
+                            enemies.push_back(Enemy(1000, 176));
+                            enemies.push_back(Enemy(300, 256));
+                            enemies.push_back(Enemy(900, 256));
+                            enemies.push_back(Enemy(1500, 256));
                             state = STATE_PLAYING;
                         }
                         if (titleSelection == 1) {
-                            // exit to menu
                             player = Player();
                             state = STATE_TITLE;
                             titleSelection = 0;
@@ -102,21 +132,32 @@ int main() {
             }
         }
 
-        // update
         if (state == STATE_PLAYING) {
             const Uint8* keys = SDL_GetKeyboardState(NULL);
             player.handleInput(keys, dt);
             player.update(dt, tileMap);
             camera.update(player.x, player.y, player.width, player.height);
 
-            // death — fell off bottom of map
-            if (player.y > MAP_ROWS * TILE_SIZE) {
+            for (auto& e : enemies) {
+                e.update(dt, tileMap, player.x, player.y);
+
+                if (e.active && e.overlaps(player.x, player.y, player.width, player.height)) {
+                    if (player.isDashing) {
+                        e.takeDamage(2);
+                    }
+                    else {
+                        player.takeDamage(1);
+                    }
+                }
+            }
+
+            // death
+            if (player.y > MAP_ROWS * TILE_SIZE || !player.isAlive()) {
                 state = STATE_GAMEOVER;
                 titleSelection = 0;
             }
         }
 
-        // draw to render target
         SDL_SetRenderTarget(renderer, renderTarget);
         SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
         SDL_RenderClear(renderer);
@@ -129,21 +170,29 @@ int main() {
 
         if (state == STATE_PLAYING) {
             tileMap.render(renderer, camera.x, camera.y);
+            for (auto& e : enemies) e.render(renderer, camera.x, camera.y);
             player.render(renderer, camera.x, camera.y);
+            player.renderHUD(renderer);
         }
 
         if (state == STATE_GAMEOVER) {
-            // still draw the world behind the overlay
             tileMap.render(renderer, camera.x, camera.y);
+            for (auto& e : enemies) e.render(renderer, camera.x, camera.y);
             player.render(renderer, camera.x, camera.y);
+            player.renderHUD(renderer);
 
-            // overlay
+            // dark overlay
+            SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
+            SDL_SetRenderDrawColor(renderer, 0, 0, 0, 160);
+            SDL_Rect overlay = { 0, 0, RENDER_WIDTH, RENDER_HEIGHT };
+            SDL_RenderFillRect(renderer, &overlay);
+            SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_NONE);
+
             drawText(renderer, fontLarge, "GAME OVER", 120, white);
             drawText(renderer, fontSmall, "> RETRY", 200, titleSelection == 0 ? yellow : white);
             drawText(renderer, fontSmall, "> EXIT TO MENU", 220, titleSelection == 1 ? yellow : white);
         }
 
-        // stretch to window
         SDL_SetRenderTarget(renderer, NULL);
         SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
         SDL_RenderClear(renderer);
