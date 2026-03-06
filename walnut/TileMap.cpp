@@ -30,6 +30,7 @@ void TileMap::render(SDL_Renderer* renderer, float camX, float camY) {
     for (int r = 0; r < MAP_ROWS; r++) {
         for (int c = 0; c < MAP_COLUMNS; c++) {
             if (map[r][c] == 1) {
+                SDL_SetRenderDrawColor(renderer, 0, 255, 0, 255);
                 SDL_Rect rect = {
                     c * TILE_SIZE - (int)camX,
                     r * TILE_SIZE - (int)camY,
@@ -37,11 +38,30 @@ void TileMap::render(SDL_Renderer* renderer, float camX, float camY) {
                 };
                 SDL_RenderFillRect(renderer, &rect);
             }
+            if (map[r][c] == 2) {
+                SDL_SetRenderDrawColor(renderer, 0, 100, 255, 255);
+                SDL_Rect rect = {
+                    c*TILE_SIZE - (int)camX,
+                    r*TILE_SIZE - (int)camY,
+                    TILE_SIZE, TILE_SIZE
+                };
+				SDL_RenderFillRect(renderer, &rect);
+            }
         }
     }
 }
 
 bool TileMap::isSolid(int row, int col) {
     if (row < 0 || row >= MAP_ROWS || col < 0 || col >= MAP_COLUMNS) return false;
-    return map[row][col] == 1;
+    return map[row][col] == 1 || map[row][col] == 2; // both solid and breakable block movement
+}
+
+bool TileMap::isBreakable(int row, int col) {
+    if (row < 0 || row >= MAP_ROWS || col < 0 || col >= MAP_COLUMNS) return false;
+    return map[row][col] == 2;
+}
+
+void TileMap::breakTile(int row, int col) {
+    if (row < 0 || row >= MAP_ROWS || col < 0 || col >= MAP_COLUMNS) return;
+    map[row][col] = 0;
 }

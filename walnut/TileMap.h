@@ -3,7 +3,7 @@
 
 const int TILE_SIZE = 32;
 const int MAP_ROWS = 12;
-const int MAP_COLUMNS = 20;
+const int MAP_COLUMNS = 80;
 
 class TileMap {
 public:
@@ -12,5 +12,7 @@ public:
     TileMap();
     void loadFromFile(const char* filename);
     void render(SDL_Renderer* renderer, float camX, float camY);
-    bool isSolid(int row, int col);
+    bool isSolid(int row, int column);
+    bool isBreakable(int row, int column);
+    void breakTile(int row, int column);
 };
