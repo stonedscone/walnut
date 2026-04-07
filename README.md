@@ -1,14 +1,14 @@
 # Walnut
 ## Overview
 
-Walnut is a handcrafted 2D platformer written entirely in C++ using SDL2. The goal is a complete 16-bit-styled game with original pixel art, original music, original engine. Want it built without relying on any game framework or engine. Targeting a Steam release.
+Walnut is a 2D platformer written entirely in C++ using SDL2. The goal is a complete 16-bit-styled game with original pixel art, original music, original engine. Want it built without relying on any game framework or engine. Targeting a Steam release.
 
 ---
 
 ## Features (Current)
 
 ### Player
-- Smooth movement with **delta-time physics** — framerate independent
+- Smooth movement with **delta-time physics** framerate independent
 - **Gravity and jumping** with tuned feel
 - **Roll-dash** with directional input, cooldown timer, and input locking during dash
 - Facing direction tracked for directional attacks and animation
@@ -16,17 +16,17 @@ Walnut is a handcrafted 2D platformer written entirely in C++ using SDL2. The go
 - **Invincibility frames** after taking damage to prevent combo deaths
 
 ### World
-- **TileMap system** — levels loaded from `.txt` files, no recompiling to edit levels
+- **TileMap system:** levels loaded from `.txt` files, no recompiling to edit levels
 - **Solid tile collision** with AABB resolution on all four sides
-- **Breakable tiles** — destroyed on dash contact, solid otherwise
-- **Internal render resolution** scaled up to the window — pixel-perfect at any window size
+- **Breakable tiles:** destroyed on dash contact, solid otherwise
+- **Internal render resolution** scaled up to the window, pixel-perfect at any window size
 
 ### Camera
 - Smooth camera that follows the player through the world
 
 ### Enemies
 - **Enemy base class** with virtual `update()` and `render()`
-- First enemy type: **walker** — patrols back and forth, damages player on contact
+- First enemy type: **walker** patrols back and forth, damages player on contact
 
 ### Game States
 - State machine managing gameplay, game over, and transitions
@@ -52,7 +52,7 @@ walnut/
 
 **Rendering pipeline:**
 1. All game objects draw to a fixed-resolution `SDL_Texture` (internal resolution)
-2. That texture is stretched to fill the window — crisp pixel scaling at any size
+2. That texture is stretched to fill the window
 3. HUD is drawn in screen space after the world pass
 
 ---
@@ -72,16 +72,16 @@ walnut/
 
 ## Roadmap
 
-- [ ] Sprite art — player (idle, run, jump, fall, dash), tiles, enemies
-- [ ] Animation system — spritesheet cycling via SDL_image
-- [ ] Additional enemy types
-- [ ] Boss fights (5 planned)
-- [ ] Item pickups and currency system
-- [ ] Level 2–5 design
-- [ ] Full HUD overhaul
-- [ ] Main menu and pause screen
-- [ ] Audio — SDL_mixer integration
-- [ ] Steam release via Steamworks SDK
+- Sprite art — player (idle, run, jump, fall, dash), tiles, enemies
+- Animation system — spritesheet cycling via SDL_image
+- Additional enemy types
+- Boss fights (5 planned)
+- Item pickups and currency system
+- Level 2–5 design
+- Full HUD overhaul
+- Main menu and pause screen
+- Audio
+- Steam release via Steamworks SDK
 
 ---
 
@@ -99,4 +99,4 @@ Clone the repo, open the `.sln`, set configuration to `x64 Debug` or `x64 Releas
 
 ## License
 
-All code and assets are original work. Art, engine, and design by Samuel J. Feliciano.
+All code and assets are for whatever use people see fit if they like it. Final game will be rewritten.
