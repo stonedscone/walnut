@@ -1,14 +1,4 @@
 # Walnut
-
-> A 2D platformer built from scratch in C++ with SDL2. No engine. No shortcuts.
-
-![Platform](https://img.shields.io/badge/platform-Windows-blue)
-![Language](https://img.shields.io/badge/language-C%2B%2B-orange)
-![Library](https://img.shields.io/badge/library-SDL2-green)
-![Status](https://img.shields.io/badge/status-In%20Development-yellow)
-
----
-
 ## Overview
 
 Walnut is a handcrafted 2D platformer written entirely in C++ using SDL2. The goal is a complete 16-bit-styled game with original pixel art, original music, original engine. Want it built without relying on any game framework or engine. Targeting a Steam release.
